@@ -297,3 +297,20 @@
    transition: all .6s;
 
 }
+
+.hidden {
+   display: none;
+}
+
+.mostrar {
+   display: block;
+}
+.btnMedio {
+   width: 45%;
+   
+}
+
+.btnEmpieza {
+   display: flex;
+   justify-content: space-around;
+}

@@ -3,7 +3,10 @@
 //BOTONES :
 let botonPlayerVSPlayer = document.getElementById("btnPlayer");
 let botonCPU = document.getElementById("btnCPU");
-//let btnReiniciar = document.getElementById("btnReiniciar");
+let divBtnEmpieza = document.getElementById("divBtnEmpieza");
+let btnEmpiezaPlayer = document.getElementById("btnEmpiezaPlayer");
+let btnEmpiezaCPU = document.getElementById("btnEmpiezaCPU");
+
 
 botonPlayerVSPlayer.addEventListener("click", function(evt){
     funcionPrincipalBtn(evt);  
@@ -12,18 +15,16 @@ botonPlayerVSPlayer.addEventListener("click", function(evt){
 botonCPU.addEventListener("click", function(evt){
     funcionPrincipalBtn(evt);
 }, false)
-
-/*btnReiniciar.addEventListener("click", function(evt){
-    reiniciarTablero();
-}, false)*/
  
 //FUNCIONES DE LOS CASILLEROS :
 
 let arrayCasilleros = document.getElementsByClassName("divFichas")
-let flag1; //boton Player o CPU
-let flag2 = 1; //primer o segundo movimiento
-let flag3 = 1; //para que no se agregue mas de una vez la funcion a los casilleros (js:43)
-let turno = "Blanco";
+let flag1;          //boton Player o CPU
+let flag2 = 1;      //primer o segundo movimiento
+let flag3 = 1;      //para que no se agregue mas de una vez la funcion a los casilleros(js:43)
+let colorCPU = "null";       //el color de las fichas de CPU
+let finMovimiento;   //si ya termino de mover player (para saber si mueve CPU al final de cada click del player)
+let turno = "Blanco";        //turno (siempre inicia Blanco)
 
 //fichas:
 let primerCasillero;
@@ -37,19 +38,33 @@ let arraySegundoDivComer;
 
 
 function funcionPrincipalBtn(evt){
-    reiniciarTablero()
     if(evt.path[0].id == "btnPlayer"){
+        //reiniciarTablero();
         flag1 = 1;
-        console.log(1)
+        divBtnEmpieza.classList.remove("mostrar");
+        divBtnEmpieza.classList.add("hidden");
+
     }else if(evt.path[0].id == "btnCPU"){
         flag1 = 2;
-        console.log(2)
+        divBtnEmpieza.classList.remove("hidden");
+        divBtnEmpieza.classList.add("mostrar");
+        
+        btnEmpiezaPlayer.addEventListener("click", function(){
+            //reiniciarTablero();
+            colorCPU = "Negro";
+        }, false)
+        btnEmpiezaCPU.addEventListener("click", function(){
+            //reiniciarTablero();
+            colorCPU = "Blanco";
+            movAutomaticoCPU(colorCPU);
+
+        }, false)
     }
     
     if(flag3 == 1){
         for(i=0; i<arrayCasilleros.length; i++){
             arrayCasilleros[i].addEventListener("click", function(evt){
-                funcionPrincipalCasilleros(evt)
+                funcionPrincipalCasilleros(evt);
             }, false)
         }
         flag3 = 0;
@@ -70,11 +85,10 @@ function reiniciarTablero(){
                 arrayCasilleros[i].classList.replace(fichaOrigenCasilla, "divBlanco")
             }
     }
-    
-    
+    turno = "Blanco";
 }
-function funcionPrincipalCasilleros(evt){ //para ambos botones
-    if(flag1 == 1){
+function funcionPrincipalCasilleros(evt){ //para ambos botones (contra player y contra CPU)
+        finMovimiento = false;
         let casilleroClick = evt.path[1];
         let casillerosDelTurno = divsDelTurno(turno); //VALIDADO
         let poderComer = posibilidadComer(casillerosDelTurno);
@@ -114,12 +128,12 @@ function funcionPrincipalCasilleros(evt){ //para ambos botones
                             let poderComer2 = posibilidadComer(casillerosDelTurno2);
                                 if(poderComer2 == false){
                                     cambiarTurno();
+                                    finMovimiento = true;
                                 }
                         }
                     }
                 }
             }else if(poderComer == false){
-                
                 if(flag2 == 1){
                     primerCasillero = casilleroClick;
                     if(primerCasillero.classList[0] == "div" + turno || primerCasillero.classList[0] == "divDama" + turno){//VALIDADO
@@ -140,6 +154,7 @@ function funcionPrincipalCasilleros(evt){ //para ambos botones
                         }else if(segundoCasillero.classList[0] == "divTransparente"){
                         let validacionFinalComun = validarPosibilidadDeMoverComun(primerCasillero, turno);
                         flag6 = 0;
+                        console.log(validacionFinalComun)
                             for(e=0; e<validacionFinalComun.length; e++){
                                 if(segundoCasillero == validacionFinalComun[e]){
                                     flag6 = 1;
@@ -152,12 +167,13 @@ function funcionPrincipalCasilleros(evt){ //para ambos botones
                                 resetearOpacidad();
                                 cambiarTurno();
                                 flag2 = 1;
+                                finMovimiento = true;
                             }
                         }
                 }
             }
-    }else if(flag1 == 2){
-        console.log("contra cpu");
+    if(finMovimiento == true && flag1 == 2){
+        movAutomaticoCPU(colorCPU);
     }
 }
 
@@ -167,7 +183,7 @@ function posibilidadComer(casillerosValidar){
         for(i=0; i<casillerosValidar.length; i++){
             validacionFinal = validarCasillero(casillerosValidar[i]);
             if(validacionFinal != "vacio"){
-                arrayCasillerosQuePuedenComer.push(validacionFinal);
+                arrayCasillerosQuePuedenComer.push(casillerosValidar[i]);
             }
         }
         if(arrayCasillerosQuePuedenComer.length > 0){
@@ -237,6 +253,7 @@ return validacionSegundoCasillero;
 
 function validarSegundoCasillero(fichaValidar, filaPrimer, colPrimer, casillerosEnemigos, enemigo){
     let flag4 = 0;
+    let segundosCaslleros = [];
     for(e=0; e<casillerosEnemigos.length; e++){ //un gran for para conseguir el segundo casillero (que tiene que ser transparente) a partir de cada enemigo
         let filaDelMedio = parseInt(casillerosEnemigos[e].classList[3].split("a")[1]);
         let colDelMedio = parseInt(casillerosEnemigos[e].classList[2].split("l")[1]);
@@ -251,15 +268,15 @@ function validarSegundoCasillero(fichaValidar, filaPrimer, colPrimer, casilleros
                 colDeFilaSegundo = casillerosConFilaSegundo[a].classList[2].split("l")[1];
                     if(colDeFilaSegundo == colSegundo){
                         if(casillerosConFilaSegundo[a].classList[0] == "divTransparente"){
-                        
                             flag4 = 1;
+                            segundosCaslleros.push(casillerosConFilaSegundo[a]);
                         }
                     }
             }
     }
     if(flag4 == 1){
         
-        return fichaValidar;
+        return segundosCaslleros;
 
     }else if(flag4 == 0){
         
@@ -286,8 +303,6 @@ function segundoCasilleroTransparente(segundoCasillero, primerCasillero, enemigo
 
 function validarCasilleroDelMedio(distCol, distFila, filaPrimer, colPrimer, enemigo){//VALIDADO
     let filaDelMedio = document.getElementsByClassName("fila" + (filaPrimer + distFila));
-
-
     let flag5 = false;
     for(u=0; u<filaDelMedio.length; u++){
         colFilaDelMedio = parseInt(filaDelMedio[u].classList[2].split("l")[1]);
@@ -382,12 +397,17 @@ function validarSegundoCasilleroComun(primerCasillero, sumaFila1, sumaFila2, sum
     //paso 3 : buscar columnas de cada ficha del arrayFilasEnemigo y guardar casilleros del array con colFilasEnemigo == colValidar + sumaCol1 || colFilasEnemigo == colValidar + sumaCol2
     let casillerosVacios = [];
     let validacionSegundoCasillero = false;
+    console.log("arrayFilasVacio")
+    console.log(arrayFilasVacio)
+
     for(e=0; e<arrayFilasVacio.length; e++){
+        
         let colFilasVacio = arrayFilasVacio[e].classList[2].split("l")[1];
             if(colFilasVacio == colPrimer + sumaCol1 || colFilasVacio == colPrimer + sumaCol2){
                 if(arrayFilasVacio[e].classList[0].split("v")[1] == "Transparente"){
                     casillerosVacios.push(arrayFilasVacio[e]);
                     
+
                 }
             }
 }
@@ -403,7 +423,112 @@ function moverFichaComun(primerCasillero, segundoCasillero){
 } 
 
 
+//funciones para fichas CPU
 
+function movAutomaticoCPU(colorCPU){
+    casillerosDelColorCPU = divsDelTurno(colorCPU);
+    poderComer = posibilidadComer(divsDelTurno(colorCPU));
+
+    if(poderComer.length > 0){
+            primerCasillero = buscarCasilleroAleatorio(poderComer);
+            validarCasilleroParaComer = validarCasillero(primerCasillero)
+            console.log("validarCasilleroParaComer")
+            console.log(validarCasilleroParaComer)
+
+            segundoCasillero = buscarCasilleroAleatorio(validarCasilleroParaComer)
+            let casilleroDelMedio;
+            let fichaDelMedio;
+            let fichaPrimero = primerCasillero.classList[0].split("v")[1];
+            let colPrimerCasillero = primerCasillero.classList[2].split("l")[1];
+            let filaPrimerCasillero = primerCasillero.classList[3].split("a")[1];
+
+            let fichaSegundo = segundoCasillero.classList[0].split("v")[1];
+            let colSegundoCasillero = segundoCasillero.classList[2].split("l")[1];
+            let filaSegundoCasillero = segundoCasillero.classList[3].split("a")[1];
+
+            let filaDelMedio = parseInt(filaPrimerCasillero) + parseInt(filaSegundoCasillero - filaPrimerCasillero) / 2;
+            let colDelMedio = parseInt(colPrimerCasillero) + (colSegundoCasillero - colPrimerCasillero) / 2;
+
+        let casillerosFilaDelMedio = document.getElementsByClassName("fila" + filaDelMedio);
+        for(i=0; i<casillerosFilaDelMedio.length; i++){
+            colDeCasilleroI = casillerosFilaDelMedio[i].classList[2].split("l")[1];
+            if(colDeCasilleroI == colDelMedio){
+                casilleroDelMedio = casillerosFilaDelMedio[i];
+                fichaDelMedio = casilleroDelMedio.classList[0].split("v")[1];
+
+            }
+        }
+        const myTimeoutPrimero = setTimeout(function(){cambiarClase(primerCasillero, fichaPrimero, "Transparente")}, 500);
+        const myTimeoutSegundo = setTimeout(function(){cambiarClase(segundoCasillero, fichaSegundo, fichaPrimero)}, 700);
+        const myTimeoutDelMedio = setTimeout(function(){cambiarClase(casilleroDelMedio, fichaDelMedio, "Transparente")}, 1200);
+
+    }else if(poderComer == false){
+        posiblesPrimerosCasilleros = validarMoverComunCPU(casillerosDelColorCPU);
+        if(posiblesPrimerosCasilleros.length > 0){
+            primerCasillero = buscarCasilleroAleatorio(posiblesPrimerosCasilleros);
+            let fichaPrimero = primerCasillero.classList[0].split("v")[1];
+
+            posiblesSegundosCasilleros = validarPosibilidadDeMoverComun(primerCasillero);
+            segundoCasillero = buscarCasilleroAleatorio(posiblesSegundosCasilleros);
+            let fichaSegundo = segundoCasillero.classList[0].split("v")[1];
+
+            const myTimeoutPrimero = setTimeout(function(){cambiarClase(primerCasillero, fichaPrimero, "Transparente")}, 600);
+            const myTimeoutSegundo = setTimeout(function(){cambiarClase(segundoCasillero, fichaSegundo, fichaPrimero)}, 800);
+
+
+        }else {
+            pierde(colorCPU);
+        }
+
+    }
+
+    cambiarTurno();
+}
+
+function validarMoverComunCPU(arrayCasillerosTurno){
+    let validacion;
+    let arrayFichasQueSeMueven = [];
+    for(b = 0; b<arrayCasillerosTurno.length; b++){
+        fichaPrimer = arrayCasillerosTurno[b].classList[0].split("v")[1];
+        
+            if(turno == "Blanco"){
+                if(fichaPrimer == "Blanco"){
+                    validacion = validarSegundoCasilleroComun(arrayCasillerosTurno[b], -1, -1, +1, -1, "Negro");
+                    if(validacion.length > 0){
+                        arrayFichasQueSeMueven.push(arrayCasillerosTurno[b])
+                    }
+                }else if(fichaPrimer == "DamaBlanco"){
+                    validacion = validarSegundoCasilleroComun(arrayCasillerosTurno[b], +1, -1, +1, -1, "Negro");
+                    if(validacion.length > 0){
+                        arrayFichasQueSeMueven.push(arrayCasillerosTurno[b])
+                    }
+                }
+            }else if(turno == "Negro"){
+                if(fichaPrimer == "Negro"){
+                    validacion = validarSegundoCasilleroComun(arrayCasillerosTurno[b], +1, +1, +1, -1, "Blanco");
+                    
+                    if(validacion.length > 0){
+                        arrayFichasQueSeMueven.push(arrayCasillerosTurno[b])
+                    }
+                }else if(fichaPrimer == "DamaNegro"){
+                    validacion = validarSegundoCasilleroComun(arrayCasillerosTurno[b], +1, -1, +1, -1, "Blanco");
+                    if(validacion.length > 0){
+                        arrayFichasQueSeMueven.push(arrayCasillerosTurno[b])
+                    }
+                }
+            }
+    
+    }
+
+
+    return arrayFichasQueSeMueven;
+}
+
+//perder o ganar
+
+function pierde(colorFichas){
+
+}
 
 //SUB-FUNCIONES
 function divsDelTurno(turno){ //VALIDADO
@@ -455,7 +580,6 @@ function cambiarDamas(){
 function cambiarClase(casillero, fichaOrigen, fichaFinal){
     casillero.classList.replace("div" + fichaOrigen, "div" + fichaFinal);
 }
-
 function cambiarOpacidad(casillero){
     for(i=0; i<arrayCasilleros.length; i++){
         arrayCasilleros[i].classList.remove("sinOpacidad");
@@ -463,10 +587,21 @@ function cambiarOpacidad(casillero){
     }
     casillero.classList.add("sinOpacidad");
 }
-
 function resetearOpacidad(){
     for(i=0; i<arrayCasilleros.length; i++){
         arrayCasilleros[i].classList.remove("conOpacidad");
         arrayCasilleros[i].classList.add("sinOpacidad");
     }
+}
+function buscarCasilleroAleatorio(listaCasilleros){
+    let random = Math.random();
+    random = Math.trunc((random * parseInt(listaCasilleros.length)));
+    console.log("random")
+    console.log(random)
+
+    console.log("listaCasilleros.length")
+    console.log(listaCasilleros.length)
+
+
+    return listaCasilleros[random];
 }
