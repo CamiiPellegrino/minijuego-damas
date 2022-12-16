@@ -3,6 +3,7 @@
    top:0;
    left: 0;
    height: 80vh;
+   margin: 0 auto;
 }
 
 .contenedor2Btn {
@@ -28,8 +29,10 @@
    float: left;
    top:0;
    left:0;
+   
    display: inline-block;
    height: 80vh;
+   position: relative;
 }
 .contenedor{ 
    
@@ -313,4 +316,13 @@
 .btnEmpieza {
    display: flex;
    justify-content: space-around;
+}
+
+.divFlotante {
+   position: absolute;
+   opacity: .95;
+   background-color: rgb(255, 255, 255);
+   top: 25%;
+   left: 25%;
+   font-size: 40px;
 }

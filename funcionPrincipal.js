@@ -6,6 +6,7 @@ let botonCPU = document.getElementById("btnCPU");
 let divBtnEmpieza = document.getElementById("divBtnEmpieza");
 let btnEmpiezaPlayer = document.getElementById("btnEmpiezaPlayer");
 let btnEmpiezaCPU = document.getElementById("btnEmpiezaCPU");
+let divFlotante = document.getElementById("divFlotante");
 
 
 botonPlayerVSPlayer.addEventListener("click", function(evt){
@@ -23,7 +24,7 @@ let flag1;          //boton Player o CPU
 let flag2 = 1;      //primer o segundo movimiento
 let flag3 = 1;      //para que no se agregue mas de una vez la funcion a los casilleros(js:43)
 let colorCPU = "null";       //el color de las fichas de CPU
-let finMovimiento;   //si ya termino de mover player (para saber si mueve CPU al final de cada click del player)
+let finMovimiento;           //si ya termino de mover player (para saber si mueve CPU al final de cada click del player)
 let turno = "Blanco";        //turno (siempre inicia Blanco)
 
 //fichas:
@@ -39,7 +40,7 @@ let arraySegundoDivComer;
 
 function funcionPrincipalBtn(evt){
     if(evt.path[0].id == "btnPlayer"){
-        //reiniciarTablero();
+        reiniciarTablero();
         flag1 = 1;
         divBtnEmpieza.classList.remove("mostrar");
         divBtnEmpieza.classList.add("hidden");
@@ -50,13 +51,13 @@ function funcionPrincipalBtn(evt){
         divBtnEmpieza.classList.add("mostrar");
         
         btnEmpiezaPlayer.addEventListener("click", function(){
-            //reiniciarTablero();
+            reiniciarTablero();
             colorCPU = "Negro";
         }, false)
         btnEmpiezaCPU.addEventListener("click", function(){
-            //reiniciarTablero();
+            reiniciarTablero();
             colorCPU = "Blanco";
-            movAutomaticoCPU(colorCPU);
+            movAutomaticoCPU(flag1, colorCPU, divsDelTurno(colorCPU));
 
         }, false)
     }
@@ -86,8 +87,12 @@ function reiniciarTablero(){
             }
     }
     turno = "Blanco";
+    divFlotante.classList.remove("mostrar");
+    divFlotante.classList.add("hidden");
 }
 function funcionPrincipalCasilleros(evt){ //para ambos botones (contra player y contra CPU)
+    buscarPerdedor(flag1, colorCPU);
+    console.log(turno)
         finMovimiento = false;
         let casilleroClick = evt.path[1];
         let casillerosDelTurno = divsDelTurno(turno); //VALIDADO
@@ -124,7 +129,8 @@ function funcionPrincipalCasilleros(evt){ //para ambos botones (contra player y 
                             resetearOpacidad();
                             cambiarDamas();
                             flag2 = 1;
-                            let casillerosDelTurno2 = divsDelTurno(turno)
+                            //let casillerosDelTurno2 = divsDelTurno(turno)
+                            let casillerosDelTurno2 = [segundoCasillero];
                             let poderComer2 = posibilidadComer(casillerosDelTurno2);
                                 if(poderComer2 == false){
                                     cambiarTurno();
@@ -154,7 +160,6 @@ function funcionPrincipalCasilleros(evt){ //para ambos botones (contra player y 
                         }else if(segundoCasillero.classList[0] == "divTransparente"){
                         let validacionFinalComun = validarPosibilidadDeMoverComun(primerCasillero, turno);
                         flag6 = 0;
-                        console.log(validacionFinalComun)
                             for(e=0; e<validacionFinalComun.length; e++){
                                 if(segundoCasillero == validacionFinalComun[e]){
                                     flag6 = 1;
@@ -172,9 +177,15 @@ function funcionPrincipalCasilleros(evt){ //para ambos botones (contra player y 
                         }
                 }
             }
-    if(finMovimiento == true && flag1 == 2){
-        movAutomaticoCPU(colorCPU);
-    }
+            buscarPerdedor(flag1, colorCPU);
+
+        if(finMovimiento == true && flag1 == 2){
+            movAutomaticoCPU(flag1, colorCPU, divsDelTurno(colorCPU));
+            buscarPerdedor(flag1, colorCPU);
+
+        }
+        buscarPerdedor(flag1, colorCPU);
+    
 }
 
 //funciones para COMER
@@ -209,6 +220,8 @@ function validarCasillero(casilleroValidar){
             }else if(fichaValidar == "DamaNegro"){
                 validacion = buscarCasilleroSegundoYMedio(casilleroValidar, +1, -1, +1, -1, "Blanco");
             }
+
+
     return validacion;
 }
 
@@ -275,11 +288,9 @@ function validarSegundoCasillero(fichaValidar, filaPrimer, colPrimer, casilleros
             }
     }
     if(flag4 == 1){
-        
         return segundosCaslleros;
 
     }else if(flag4 == 0){
-        
         return "vacio";
     }
 }
@@ -397,8 +408,6 @@ function validarSegundoCasilleroComun(primerCasillero, sumaFila1, sumaFila2, sum
     //paso 3 : buscar columnas de cada ficha del arrayFilasEnemigo y guardar casilleros del array con colFilasEnemigo == colValidar + sumaCol1 || colFilasEnemigo == colValidar + sumaCol2
     let casillerosVacios = [];
     let validacionSegundoCasillero = false;
-    console.log("arrayFilasVacio")
-    console.log(arrayFilasVacio)
 
     for(e=0; e<arrayFilasVacio.length; e++){
         
@@ -425,15 +434,13 @@ function moverFichaComun(primerCasillero, segundoCasillero){
 
 //funciones para fichas CPU
 
-function movAutomaticoCPU(colorCPU){
+function movAutomaticoCPU(flag1, colorCPU, casillerosParaEvaluarSiComen){
+    console.log(turno)
     casillerosDelColorCPU = divsDelTurno(colorCPU);
-    poderComer = posibilidadComer(divsDelTurno(colorCPU));
-
+    let poderComer = posibilidadComer(casillerosParaEvaluarSiComen);
     if(poderComer.length > 0){
             primerCasillero = buscarCasilleroAleatorio(poderComer);
             validarCasilleroParaComer = validarCasillero(primerCasillero)
-            console.log("validarCasilleroParaComer")
-            console.log(validarCasilleroParaComer)
 
             segundoCasillero = buscarCasilleroAleatorio(validarCasilleroParaComer)
             let casilleroDelMedio;
@@ -455,13 +462,36 @@ function movAutomaticoCPU(colorCPU){
             if(colDeCasilleroI == colDelMedio){
                 casilleroDelMedio = casillerosFilaDelMedio[i];
                 fichaDelMedio = casilleroDelMedio.classList[0].split("v")[1];
-
             }
         }
-        const myTimeoutPrimero = setTimeout(function(){cambiarClase(primerCasillero, fichaPrimero, "Transparente")}, 500);
-        const myTimeoutSegundo = setTimeout(function(){cambiarClase(segundoCasillero, fichaSegundo, fichaPrimero)}, 700);
-        const myTimeoutDelMedio = setTimeout(function(){cambiarClase(casilleroDelMedio, fichaDelMedio, "Transparente")}, 1200);
-
+        const myTimeoutPrimero = setTimeout(function(){cambiarClase(primerCasillero, fichaPrimero, "Transparente")}, 600);
+        const myTimeoutSegundo = setTimeout(function(){cambiarClase(segundoCasillero, fichaSegundo, fichaPrimero)}, 800);
+        const myTimeoutDelMedio = setTimeout(function(){
+            cambiarClase(casilleroDelMedio, fichaDelMedio, "Transparente")
+            cambiarDamas();   
+        }, 1200);
+         
+        let arraySegundoCasillero;
+        let poderComer2;
+        setTimeout(function(){
+            arraySegundoCasillero = [segundoCasillero];
+            poderComer2 = posibilidadComer(arraySegundoCasillero);
+            cambiarDamas();
+            if(poderComer2.length > 0){
+                console.log("hay fichas q comen por segunda vez")
+                
+                movAutomaticoCPU(flag1, colorCPU, arraySegundoCasillero);
+            }else{
+                console.log("ya no puede comer mas")
+                setTimeout(function(){
+                    buscarPerdedor(flag1, colorCPU)
+                    cambiarTurno()
+                    console.log("cambio turno")
+        
+            }, 1202);
+                
+            }
+        }, 1201)
     }else if(poderComer == false){
         posiblesPrimerosCasilleros = validarMoverComunCPU(casillerosDelColorCPU);
         if(posiblesPrimerosCasilleros.length > 0){
@@ -474,15 +504,20 @@ function movAutomaticoCPU(colorCPU){
 
             const myTimeoutPrimero = setTimeout(function(){cambiarClase(primerCasillero, fichaPrimero, "Transparente")}, 600);
             const myTimeoutSegundo = setTimeout(function(){cambiarClase(segundoCasillero, fichaSegundo, fichaPrimero)}, 800);
-
+            const myTimeoutTerminaCPU = setTimeout(function(){
+                
+                    buscarPerdedor(flag1, colorCPU);
+                    cambiarDamas();    
+                    cambiarTurno();
+                    console.log("cambio turno");
+            }, 802);
 
         }else {
+            console.log("pierde porque cayo en el tercer else")
             pierde(colorCPU);
         }
-
     }
-
-    cambiarTurno();
+    
 }
 
 function validarMoverComunCPU(arrayCasillerosTurno){
@@ -525,8 +560,50 @@ function validarMoverComunCPU(arrayCasillerosTurno){
 }
 
 //perder o ganar
+let imgGanaPierde = document.getElementById("imgGanaPierde");
+let parrafoGanaPierde = document.getElementById("parrafoGanaPierde");
 
-function pierde(colorFichas){
+function buscarPerdedor(versus, colorCPU){
+    arrayCasilleros = document.getElementsByClassName("divFichas");
+    let ficha;
+    let cantBlancas = 0;
+    let cantNegras = 0;
+    for(u=0; u<arrayCasilleros.length; u++){
+        ficha = arrayCasilleros[u].classList[0]
+        if(ficha == "divBlanco" || ficha == "divDamaBlanco"){
+            cantBlancas = cantBlancas + 1;
+
+        }else if(ficha == "divNegro" || ficha == "divDamaNegro"){
+            cantNegras = cantNegras + 1;
+
+        }
+    }
+    if(cantNegras == 0 && cantBlancas > 0){
+        pierde("Blanco", versus, colorCPU)
+    }else if(cantBlancas == 0 && cantNegras > 0){
+        pierde("Negro", versus, colorCPU)
+    }
+}
+
+function pierde(colorFichasGanadoras, versus, colorCPU){
+    divFlotante.classList.remove("hidden");
+    divFlotante.classList.add("mostrar");
+    if(versus == 2){
+        if(colorCPU == colorFichasGanadoras){
+            imgGanaPierde.src = "img/memePerdiste.jpg";
+        }else if(colorCPU != colorFichasGanadoras){
+            imgGanaPierde.src = "img/memeSimpsonConTxt.jpg";
+            
+        }
+    }else if(versus == 1){
+        if(colorFichasGanadoras == "Blanco"){
+            imgGanaPierde.src = "img/winBlancas.png";
+        }else if(colorFichasGanadoras == "Negro"){
+            imgGanaPierde.src = "img/winNegras.png";
+
+        }
+    }
+    imgGanaPierde.style.width = "500px";
 
 }
 
@@ -596,12 +673,5 @@ function resetearOpacidad(){
 function buscarCasilleroAleatorio(listaCasilleros){
     let random = Math.random();
     random = Math.trunc((random * parseInt(listaCasilleros.length)));
-    console.log("random")
-    console.log(random)
-
-    console.log("listaCasilleros.length")
-    console.log(listaCasilleros.length)
-
-
     return listaCasilleros[random];
 }
